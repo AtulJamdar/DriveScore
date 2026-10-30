@@ -136,4 +136,12 @@ export class TripsService {
 
     return trip;
   }
+
+  async getUserTrips(userId: string) {
+  return this.tripModel.find({ userId }).sort({ startTime: -1 }).exec();
+}
+
+async getTrip(id: string) {
+  return this.tripModel.findById(id).exec();
+}
 }

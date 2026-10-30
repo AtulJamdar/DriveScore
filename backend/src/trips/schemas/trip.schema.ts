@@ -14,6 +14,17 @@ export class Trip {
   @Prop({ default: null })
   endTime: Date;
 
+  @Prop({ type: Object, default: {} })
+  stats: {
+  harshBraking: number;
+  harshAccel: number;
+  harshTurn: number;
+  totalEvents: number;
+  };
+
+  @Prop()
+  totalKm: number;
+
   @Prop({
     type: [
       {

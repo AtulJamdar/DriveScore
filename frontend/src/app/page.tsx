@@ -117,6 +117,22 @@ useEffect(() => {
           <div className="bg-gray-800 p-6 rounded-xl border"><h2 className="text-gray-400">Current Speed</h2><p className="text-3xl font-bold text-yellow-400 mt-2">{Math.round(currentSpeed)} km/h</p></div>
           <div className="bg-gray-800 p-6 rounded-xl border"><h2 className="text-gray-400">GPS Points</h2><p className="text-3xl font-bold text-blue-400 mt-2">{points.length}</p></div>
           <div className="bg-gray-800 p-6 rounded-xl border"><h2 className="text-gray-400">Live Score</h2><p className="text-3xl font-bold text-green-400 mt-2">{score}</p></div>
+          {tripId && (
+  <div className="grid grid-cols-3 gap-3 mb-4">
+    <div className="bg-gray-800 p-3 rounded-xl border text-center">
+      <p className="text-xs text-gray-400">Braking</p>
+      <p className="text-lg font-bold text-red-400">{events.filter(e=>e.type==='harsh_braking').length}</p>
+    </div>
+    <div className="bg-gray-800 p-3 rounded-xl border text-center">
+      <p className="text-xs text-gray-400">Accel</p>
+      <p className="text-lg font-bold text-yellow-400">{events.filter(e=>e.type==='harsh_accel').length}</p>
+    </div>
+    <div className="bg-gray-800 p-3 rounded-xl border text-center">
+      <p className="text-xs text-gray-400">Turn</p>
+      <p className="text-lg font-bold text-orange-400">{events.filter(e=>e.type==='harsh_turn').length}</p>
+    </div>
+  </div>
+)}
         </div>
 
         {tripId ? (
@@ -131,19 +147,30 @@ useEffect(() => {
 )}
 
         
-        {tripId && (
+        {tripId && events.length > 0 && (
   <div className="bg-gray-800 p-4 rounded-xl border mb-8">
-    <div className="border rounded-xl p-4">
-      <h3>Live Driving Events</h3>
-      <p>{lastEvent ? lastEvent.type : "No events detected. Keep driving safely."}</p>
+    <div className="border rounded-xl p-4 mb-3">
+      <h3 className="font-semibold">Live Driving Events</h3>
+      <p className="text-sm text-gray-400">
+        {lastEvent ? `${lastEvent.type.replace('_',' ').toUpperCase()} at ${lastEvent.time}` : "No events"}
+      </p>
     </div>
-    <div className="space-y-2">
-      {events.map((e,i)=>(
-        <div key={i} className="p-3 rounded-lg flex justify-between ...">
-          ...
+
+    <div className="space-y-2 max-h-64 overflow-y-auto">
+      {events.filter(e => e && e.type).map((e, i) => (
+        <div key={i} className={`p-3 rounded-lg flex justify-between text-sm ${e.type==='harsh_braking'?'bg-red-900/30 text-red-300': e.type==='harsh_accel'?'bg-yellow-900/30 text-yellow-300':'bg-orange-900/30 text-orange-300'}`}>
+          <span>{e.type === 'harsh_braking' ? '🚨 Harsh Braking' : e.type === 'harsh_accel' ? '⚡ Harsh Acceleration' : '↪️ Harsh Turn'}</span>
+          <span>{e.time} - {e.speed?.toFixed(0)} km/h</span>
         </div>
       ))}
     </div>
+  </div>
+)}
+
+{/* Agar trip nahi hai toh kuch bhi mat dikha */}
+{!tripId && (
+  <div className="bg-gray-800 p-8 rounded-xl border mb-8 text-center text-gray-400">
+    Start a trip to see live events
   </div>
 )}
 
