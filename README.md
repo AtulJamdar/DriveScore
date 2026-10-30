@@ -1,9 +1,6 @@
 # DriveScore - Safe Driving Telematics + Rewards 
 
-MERN Stack MVP clone of attento.club - Smartphone based telematics without hardware dongle.
-
-## Why I built this?
-Attento is solving road safety in India where driver behavior is not tracked. I built DriveScore as a functional MVP to understand their core problem: GPS + Accelerometer + Gyro -> AI scoring -> Rewards.
+- Smartphone based telematics without hardware dongle.
 
 ## Features
 - Live GPS tracking with Leaflet (free)
@@ -14,8 +11,8 @@ Attento is solving road safety in India where driver behavior is not tracked. I 
 - Mock Drive Mode for demo without car
 
 ## Tech Stack
-- Frontend: Next.js 14, Shadcn, Leaflet, Firebase Hosting + Vercel
-- Backend: NestJS 10, MongoDB Atlas (GCP asia-south1), Cloud Run / Render
+- Frontend: Next.js 14, Shadcn, Leaflet, Vercel
+- Backend: NestJS 10, MongoDB Atlas, Render
 - Sensors: Geolocation API, DeviceMotionEvent (gyro)
 
 ## Live Demo
@@ -27,7 +24,7 @@ Test: Open on mobile -> Start Trip -> Drive -> End -> Go to Wallet -> Redeem
 - GPS glitch filtering (<1km segment)
 - Haversine distance, not point count
 - Cooldown logic to avoid toast spam
-- Real sensor fusion is hard - Attento's team is doing great work
+- Real sensor fusion is hard 
 
 ## Next Steps
 - Add ML model for driver profiling
