@@ -144,4 +144,8 @@ export class TripsService {
 async getTrip(id: string) {
   return this.tripModel.findById(id).exec();
 }
+
+async getAllTrips() {
+  return this.tripModel.find().sort({ startTime: -1 }).limit(20).exec();
+}
 }
