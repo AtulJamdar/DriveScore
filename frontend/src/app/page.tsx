@@ -63,17 +63,28 @@ export default function DrivePage() {
   }, [lastEvent]);
 
   const handleStartTrip = async () => {
-    const res = await fetch(`${API_BASE}/trips/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: "user_123" }) });
-    const data = await res.json();
-    setTripId(data._id || data.id); setIsEnded(false); setScore(100); setMiles(0); setEvents([]);
-  };
+  const res = await fetch(`${API_BASE}/trips/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: "user_123" }) });
+  const data = await res.json();
+  const newId = data._id || data.id;
+  setTripId(newId);
+  localStorage.setItem('activeTripId', newId); // <-- ye add kar
+  setIsEnded(false); setScore(100); setMiles(0); setEvents([]);
+};
 
   const handleEndTrip = async () => {
-    if (!tripId) return;
-    const res = await fetch(`${API_BASE}/trips/${tripId}/end`, { method: 'POST' });
-    const data = await res.json();
-    setScore(data.score); setMiles(data.milesEarned); setIsEnded(true); setTripId(null);
-  };
+  if (!tripId) return;
+  const res = await fetch(`${API_BASE}/trips/${tripId}/end`, { method: 'POST' });
+  const data = await res.json();
+  setScore(data.score); setMiles(data.milesEarned); setIsEnded(true); 
+  setTripId(null);
+  localStorage.removeItem('activeTripId'); // <-- ye add kar
+};
+
+// Page load pe check karo koi active trip hai kya
+useEffect(() => {
+  const saved = localStorage.getItem('activeTripId');
+  if (saved) setTripId(saved);
+}, []);
 
   return (
     
@@ -108,29 +119,33 @@ export default function DrivePage() {
           <div className="bg-gray-800 p-6 rounded-xl border"><h2 className="text-gray-400">Live Score</h2><p className="text-3xl font-bold text-green-400 mt-2">{score}</p></div>
         </div>
 
-        <div className="bg-gray-800 p-4 rounded-xl border mb-8">
-          <h2 className="text-gray-400 mb-3 font-semibold">Live Route Map</h2>
-          <div className="h- rounded-lg overflow-hidden border"><LiveMap points={points} /></div>
-        </div>
-
-        
-        <div className="bg-gray-800 p-4 rounded-xl border mb-8">
-          {tripId && (
-  <div className="border rounded-xl p-4">
-    <h3>Live Driving Events</h3>
-    <p>{lastEvent ? lastEvent.type : "No events detected. Keep driving safely."}</p>
+        {tripId ? (
+  <div className="bg-gray-800 p-4 rounded-xl border mb-8">
+    <h2 className="text-gray-400 mb-3 font-semibold">Live Route Map</h2>
+    <div className="h-96 rounded-lg overflow-hidden border"><LiveMap points={points} /></div>
+  </div>
+) : (
+  <div className="bg-gray-800 p-8 rounded-xl border mb-8 text-center text-gray-400">
+    Start a trip to see live route map
   </div>
 )}
-            <div className="space-y-2">
-              {events.map((e,i)=>(
-                <div key={i} className={`p-3 rounded-lg flex justify-between ${e.type==='harsh_braking' ? 'bg-red-900/30 border border-red-700' : e.type==='harsh_accel' ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-orange-900/30 border border-orange-700'}`}>
-                  <span>{e.type === 'harsh_braking' ? '🛑 Harsh Braking' : e.type === 'harsh_accel' ? '⚡ Harsh Acceleration' : '↪️ Harsh Turn'}</span>
-                  <span className="text-gray-400">{e.speed} km/h • {e.time}</span>
-                </div>
-              ))}
-            </div>
-          
+
+        
+        {tripId && (
+  <div className="bg-gray-800 p-4 rounded-xl border mb-8">
+    <div className="border rounded-xl p-4">
+      <h3>Live Driving Events</h3>
+      <p>{lastEvent ? lastEvent.type : "No events detected. Keep driving safely."}</p>
+    </div>
+    <div className="space-y-2">
+      {events.map((e,i)=>(
+        <div key={i} className="p-3 rounded-lg flex justify-between ...">
+          ...
         </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {isEnded && (
           
