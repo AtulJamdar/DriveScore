@@ -8,7 +8,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'https://drivescore-xxx.vercel.app', // isko apne Vercel URL se replace karna
+      'https://drive-score-alpha.vercel.app', // isko apne Vercel URL se replace karna
       'http://localhost:3000',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
