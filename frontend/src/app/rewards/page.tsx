@@ -81,23 +81,23 @@ export default function RewardsPage() {
 
         <h2 className="text-2xl font-bold mb-4">Redemption History</h2>
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-          {history.length === 0 ? (
-            <p className="text-gray-400">Koi history nahi hai abhi.</p>
-          ) : (
-            <ul className="space-y-3">
-              {history.map((item, i) => {
-  const isEarn = item.note?.includes('completed') || item.miles > 0;
-  return (
-    <div key={i} className="flex justify-between p-3 border-b border-gray-700">
-      <span>{item.note || `Trip completed - ${item.miles} miles`}</span>
-      <span className={isEarn ? "text-green-400" : "text-red-400"}>
-        {isEarn ? `+${Math.abs(item.miles)} miles` : `-${Math.abs(item.miles)} miles`}
-      </span>
-    </div>
-  )
-})}
-            </ul>
-          )}
+          <ul className="space-y-3">
+  {history.map((h: any, i) => {
+    // Purana data ho ya naya, dono se kaam karega
+    const amount = h.amount ?? h.miles ?? 0;
+    const reason = h.reason ?? h.note ?? `Trip completed - ${amount} miles`;
+    const isEarn = reason.toLowerCase().includes('completed') || reason.toLowerCase().includes('trip') || amount > 0;
+
+    return (
+      <li key={i} className="flex justify-between border-b border-gray-700 pb-2">
+        <span>{reason}</span>
+        <span className={isEarn ? "text-green-400" : "text-red-400"}>
+          {isEarn ? `+${Math.abs(amount)}` : `-${Math.abs(amount)}`} miles
+        </span>
+      </li>
+    )
+  })}
+</ul>
         </div>
       </div>
     </main>
