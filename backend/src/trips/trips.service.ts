@@ -19,6 +19,7 @@ export class TripsService {
       score: 100,
       events: [],
       milesEarned: 0,
+      stats: { harshBraking: 0, harshAccel: 0, harshTurn: 0, totalEvents: 0 },
     });
     return trip;
   }
@@ -48,7 +49,6 @@ export class TripsService {
         const v2_ms = (point.speed * 1000) / 3600;
         const accel = (v2_ms - v1_ms) / timeDiffSec;
 
-        // Pehle pata karo kaunsa event hone wala hai
         let wouldBeType: string | null = null;
         if (accel < -3.5) wouldBeType = 'harsh_braking';
         else if (accel > 3.0) wouldBeType = 'harsh_accel';
@@ -58,7 +58,6 @@ export class TripsService {
           if (normalizedDiff > 60 && point.speed > 25) wouldBeType = 'harsh_turn';
         }
 
-        // FIX: Cooldown check - 5 sec me same type ka event dobara mat kaat
         if (wouldBeType) {
           const lastEv = trip.events[trip.events.length - 1];
           if (lastEv && lastEv.type === wouldBeType) {
@@ -68,16 +67,14 @@ export class TripsService {
               return { success: true, currentScore: trip.score };
             }
           }
-
-          // Agar cooldown clear hai toh hi event push karo
           if (wouldBeType === 'harsh_braking') {
-            trip.events.push({ type: 'harsh_braking', at: point.timestamp });
+            trip.events.push({ type: 'harsh_braking', at: point.timestamp } as any);
             trip.score = Math.max(0, trip.score - 10);
           } else if (wouldBeType === 'harsh_accel') {
-            trip.events.push({ type: 'harsh_accel', at: point.timestamp });
+            trip.events.push({ type: 'harsh_accel', at: point.timestamp } as any);
             trip.score = Math.max(0, trip.score - 8);
           } else if (wouldBeType === 'harsh_turn') {
-            trip.events.push({ type: 'harsh_turn', at: point.timestamp });
+            trip.events.push({ type: 'harsh_turn', at: point.timestamp } as any);
             trip.score = Math.max(0, trip.score - 12);
           }
         }
@@ -88,6 +85,15 @@ export class TripsService {
     return { success: true, currentScore: trip.score, lastEvent: trip.events[trip.events.length - 1] };
   }
 
+  // <-- YAHAN ADD KARNA THA -->
+  async addEvent(tripId: string, eventDto: any) {
+    const trip = await this.tripModel.findById(tripId);
+    if (!trip) throw new NotFoundException('Trip not found');
+    trip.events.push(eventDto);
+    await trip.save();
+    return trip;
+  }
+
   async endTrip(tripId: string) {
     const trip = await this.tripModel.findById(tripId);
     if (!trip) throw new NotFoundException('Trip not found');
@@ -95,57 +101,65 @@ export class TripsService {
     let totalKm = 0;
     let validSegments = 0;
     
-    for (let i = 1; i < trip.points.length; i++) {
-      const segmentKm = this.haversine(
-        trip.points[i-1].lat, trip.points[i-1].lng,
-        trip.points[i].lat, trip.points[i].lng
-      );
-      
-      // FIX 1: GPS glitch filter - agar ek jump 1km se zyada hai toh ignore karo
-      // Nahi toh 732 miles jaisa bug aayega
-      // FIX 2: Bahut chota jump <5 meter bhi ignore (GPS jitter)
-      if (segmentKm < 1 && segmentKm > 0.005) {
-        totalKm += segmentKm;
-        validSegments++;
+    if (trip.points && trip.points.length > 1) {
+      for (let i = 1; i < trip.points.length; i++) {
+        const p1 = trip.points[i-1];
+        const p2 = trip.points[i];
+        const lat1 = (p1 as any).lat ?? (p1 as any).latitude ?? (p1 as any)[1];
+        const lng1 = (p1 as any).lng ?? (p1 as any).longitude ?? (p1 as any)[0];
+        const lat2 = (p2 as any).lat ?? (p2 as any).latitude ?? (p2 as any)[1];
+        const lng2 = (p2 as any).lng ?? (p2 as any).longitude ?? (p2 as any)[0];
+        if (!lat1 || !lng1 || !lat2 || !lng2) continue;
+        const d = this.haversine(lat1, lng1, lat2, lng2);
+        if (d < 1 && d > 0.005) {
+          totalKm += d;
+          validSegments++;
+        }
       }
     }
 
+    const allEvents = trip.events || [];
+    const stats = {
+      harshBraking: allEvents.filter((e:any) => e.type === 'harsh_braking' || e.type === 'braking').length,
+      harshAccel: allEvents.filter((e:any) => e.type === 'harsh_accel' || e.type === 'harsh_acceleration').length,
+      harshTurn: allEvents.filter((e:any) => e.type === 'harsh_turn' || e.type === 'turn').length,
+      totalEvents: allEvents.length
+    };
+
+    trip.totalKm = parseFloat(totalKm.toFixed(2));
+    (trip as any).stats = stats;
     trip.endTime = new Date();
-    // FIX: 1 km = 10 miles, aur kam se kam 1 mile toh milega hi
-    // Pehle Math.floor(totalKm) tha, isliye choti trip pe 0 miles milta tha
-    // Ab totalKm 2.5km hai toh 25 miles milega
-    trip.milesEarned = Math.max(1, Math.floor(totalKm * 10));
+    (trip as any).status = 'completed';
+    (trip as any).finalScore = Math.max(0, 100 - stats.totalEvents * 10);
     
-    // Safety: Agar totalKm 0 hai (khadi gaadi) toh 1 hi mile do
     if (totalKm < 0.1) {
       trip.milesEarned = 1;
+    } else {
+      trip.milesEarned = Math.max(1, Math.floor(totalKm * 10));
     }
 
     await trip.save();
 
-    // Rewards wallet me credit karo
-    if (trip.milesEarned > 0) {
-      try {
-        await this.rewardsService.addMiles(trip.userId, trip.milesEarned, `Trip ${tripId} completed - ${totalKm.toFixed(2)}km`);
-      } catch (e) {
-        console.error("Rewards credit failed", e);
-      }
+    try {
+      await this.rewardsService.addMiles(trip.userId, trip.milesEarned, `Trip ${tripId} completed - ${totalKm.toFixed(2)}km`);
+    } catch (e) {
+      console.error("Rewards credit failed", e);
     }
 
-    console.log(`Trip ${tripId}: ${trip.points.length} points, ${validSegments} valid segments, ${totalKm.toFixed(3)} km => ${trip.milesEarned} miles`);
+    console.log(`Trip ${tripId}: ${trip.points.length} pts, ${validSegments} valid, ${totalKm.toFixed(3)} km, B:${stats.harshBraking} A:${stats.harshAccel} T:${stats.harshTurn}`);
 
     return trip;
   }
 
   async getUserTrips(userId: string) {
-  return this.tripModel.find({ userId }).sort({ startTime: -1 }).exec();
-}
+    return this.tripModel.find({ userId }).sort({ startTime: -1 }).exec();
+  }
 
-async getTrip(id: string) {
-  return this.tripModel.findById(id).exec();
-}
+  async getTrip(id: string) {
+    return this.tripModel.findById(id).exec();
+  }
 
-async getAllTrips() {
-  return this.tripModel.find().sort({ startTime: -1 }).limit(20).exec();
-}
+  async getAllTrips() {
+    return this.tripModel.find().sort({ startTime: -1 }).limit(20).exec();
+  }
 }
