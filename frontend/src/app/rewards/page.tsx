@@ -85,12 +85,17 @@ export default function RewardsPage() {
             <p className="text-gray-400">Koi history nahi hai abhi.</p>
           ) : (
             <ul className="space-y-3">
-              {history.map((h, i) => (
-                <li key={i} className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>{h.reason}</span>
-                  <span className="text-red-400">-{h.amount} miles</span>
-                </li>
-              ))}
+              {history.map((item, i) => {
+  const isEarn = item.note?.includes('completed') || item.miles > 0;
+  return (
+    <div key={i} className="flex justify-between p-3 border-b border-gray-700">
+      <span>{item.note || `Trip completed - ${item.miles} miles`}</span>
+      <span className={isEarn ? "text-green-400" : "text-red-400"}>
+        {isEarn ? `+${Math.abs(item.miles)} miles` : `-${Math.abs(item.miles)} miles`}
+      </span>
+    </div>
+  )
+})}
             </ul>
           )}
         </div>
