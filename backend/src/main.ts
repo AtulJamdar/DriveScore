@@ -6,8 +6,17 @@ async function bootstrap() {
     instrument: ObserveInstrument,
   });
 
-  // CORS enable karne ke liye yeh line add ki hai
-  app.enableCors();
-  await app.listen(process.env.PORT ?? 3000);
+  app.enableCors({
+    origin: [
+      'https://drivescore-xxx.vercel.app', // isko apne Vercel URL se replace karna
+      'http://localhost:3000',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  });
+
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`Backend running on port ${port}`);
 }
 void bootstrap();

@@ -7,6 +7,21 @@ import { Reward, RewardDocument } from './schemas/reward.schema';
 export class RewardsService {
   constructor(@InjectModel(Reward.name) private rewardModel: Model<RewardDocument>) {}
 
+  async addMiles(userId: string, miles: number, reason: string) {
+    let wallet = await this.rewardModel.findOne({ userId });
+    if(!wallet) wallet = await this.rewardModel.create({ userId, milesBalance: 0, history: [] });
+    wallet.milesBalance += miles;
+    // FIX: 'at' nahi 'date' hai schema me
+    wallet.history.push({ 
+      reason, 
+      amount: miles, 
+      type: 'earned', 
+      date: new Date() 
+    } as any);
+    await wallet.save();
+    return wallet;
+  }
+
   async getWallet(userId: string) {
     let wallet = await this.rewardModel.findOne({ userId });
     if (!wallet) {
@@ -28,7 +43,7 @@ export class RewardsService {
       amount: milesNeeded,
       reason: `Redeemed: ${voucherName}`,
       date: new Date(),
-    });
+    } as any);
 
     return await wallet.save();
   }

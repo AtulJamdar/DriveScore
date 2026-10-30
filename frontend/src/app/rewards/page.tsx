@@ -1,5 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 const rewardsList = [
   { name: "Fuel Voucher Rs 100", miles: 100 },
@@ -13,7 +16,7 @@ export default function RewardsPage() {
   const userId = "user_123"; // Dummy user id for demo
 
   useEffect(() => {
-    fetch(`http://localhost:3000/rewards/${userId}`)
+    fetch(`${API_BASE}/rewards/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setBalance(data.milesBalance || 0);
@@ -29,7 +32,7 @@ export default function RewardsPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/rewards/redeem", {
+      const res = await fetch(`${API_BASE}/rewards/redeem`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, milesNeeded: item.miles, voucherName: item.name }),
@@ -46,6 +49,9 @@ export default function RewardsPage() {
   return (
     <main className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto">
+        <Link href="/" className="inline-block mb-6 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
+  ← Back to Drive / Start New Trip
+</Link>
         <h1 className="text-3xl font-bold mb-6 text-blue-400">Attento Rewards Wallet</h1>
 
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 mb-8 flex justify-between items-center">
