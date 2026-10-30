@@ -81,6 +81,7 @@ export default function DrivePage() {
       <div className="max-w-5xl w-full">
         <h1 className="text-4xl font-bold mb-6 text-center text-blue-400">DriveScore - Live Tracker</h1>
         
+        
         {/* Controls */}
         <div className="flex flex-wrap gap-4 justify-center items-center mb-8 bg-gray-800 p-4 rounded-xl border border-gray-700">
           {!tripId ? <button onClick={handleStartTrip} className="bg-green-600 hover:bg-green-700 py-2 px-6 rounded-lg font-bold">Start Trip</button> 
@@ -92,7 +93,11 @@ export default function DrivePage() {
               <input type="range" min="20" max="100" value={mockSpeed} onChange={e=>setMockSpeed(Number(e.target.value))} className="accent-yellow-400"/>
               <span className="font-bold text-yellow-400 w-12">{mockSpeed} km/h</span>
             </div>
+            
           )}
+          <a href="/rewards" className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-6 py-2 rounded-lg">
+    Go to Wallet →
+  </a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-8">
@@ -122,6 +127,7 @@ export default function DrivePage() {
         </div>
 
         {isEnded && (
+          
   <div className="p-6 bg-gray-800 rounded-xl border border-green-500 text-center shadow-lg">
     <h3 className="text-2xl font-bold text-green-400 mb-2">Trip Ended Successfully!</h3>
     <p className="text-lg">Final Score: <span className="font-bold text-white">{score}</span></p>
