@@ -1,6 +1,6 @@
 # DriveScore - Safe Driving Telematics + Rewards 
 
-MERN Stack MVP clone of attento.club - Smartphone based telematics without hardware dongle.
+- Smartphone based telematics without hardware dongle.
 
 ## Why I built this?
 Attento is solving road safety in India where driver behavior is not tracked. I built DriveScore as a functional MVP to understand their core problem: GPS + Accelerometer + Gyro -> AI scoring -> Rewards.
