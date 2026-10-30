@@ -181,10 +181,14 @@ useEffect(() => {
     <p className="text-lg">Final Score: <span className="font-bold text-white">{score}</span></p>
     <p className="text-lg mb-4">Reward Miles Earned: <span className="font-bold text-yellow-400">+{miles} Miles</span></p>
     
-    {/* Ye button add karo */}
-    <a href="/rewards" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg mt-2">
-      Go to Rewards Wallet → Redeem
-    </a>
+    <div className="flex gap-2">
+      <Link href="/rewards">
+      <button className="bg-gray-700 px-4 py-2 rounded-lg text-sm">Go to Wallet</button>
+      </Link>
+      <Link href="/history">
+      <button className="bg-blue-600 px-4 py-2 rounded-lg text-sm">Trip History</button>
+      </Link>
+    </div>
   </div>
 )}
       </div>
