@@ -23,7 +23,7 @@ export default function DrivePage() {
 
   const { points, currentSpeed, liveScore, lastEvent } = useDriveTracker(tripId, isMock, mockSpeed);
   const { speak } = useVoiceAlert();
-<Link href="/rewards" className="bg-blue-600 px-4 py-2 rounded-lg">My Rewards: {miles} Miles</Link>
+
   // Live score update
   useEffect(() => { if (liveScore !== undefined) setScore(liveScore); }, [liveScore]);
 
@@ -76,7 +76,9 @@ export default function DrivePage() {
   };
 
   return (
+    
     <main className="flex min-h-screen flex-col items-center p-8 bg-gray-900 text-white">
+      
       <Toaster position="top-center" richColors theme="dark" />
       <div className="max-w-5xl w-full">
         <h1 className="text-4xl font-bold mb-6 text-center text-blue-400">DriveScore - Live Tracker</h1>
@@ -116,7 +118,7 @@ export default function DrivePage() {
           {tripId && (
   <div className="border rounded-xl p-4">
     <h3>Live Driving Events</h3>
-    <p>{lastEvent ? lastEvent.type : "Abhi tak sab smooth hai, safe drive kar raha hai ✅"}</p>
+    <p>{lastEvent ? lastEvent.type : "No events detected. Keep driving safely."}</p>
   </div>
 )}
             <div className="space-y-2">
@@ -127,7 +129,7 @@ export default function DrivePage() {
                 </div>
               ))}
             </div>
-          }
+          
         </div>
 
         {isEnded && (
