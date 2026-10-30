@@ -111,10 +111,14 @@ export default function DrivePage() {
           <div className="h- rounded-lg overflow-hidden border"><LiveMap points={points} /></div>
         </div>
 
-        {/* Attento style Event Feed */}
+        
         <div className="bg-gray-800 p-4 rounded-xl border mb-8">
-          <h2 className="text-lg font-bold mb-3">Live Driving Events (Attento Style)</h2>
-          {events.length === 0 ? <p className="text-gray-400">Abhi tak sab smooth hai, safe drive kar raha hai ✅</p> :
+          {tripId && (
+  <div className="border rounded-xl p-4">
+    <h3>Live Driving Events</h3>
+    <p>{lastEvent ? lastEvent.type : "Abhi tak sab smooth hai, safe drive kar raha hai ✅"}</p>
+  </div>
+)}
             <div className="space-y-2">
               {events.map((e,i)=>(
                 <div key={i} className={`p-3 rounded-lg flex justify-between ${e.type==='harsh_braking' ? 'bg-red-900/30 border border-red-700' : e.type==='harsh_accel' ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-orange-900/30 border border-orange-700'}`}>

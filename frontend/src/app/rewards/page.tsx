@@ -52,7 +52,7 @@ export default function RewardsPage() {
         <Link href="/" className="inline-block mb-6 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
   ← Back to Drive / Start New Trip
 </Link>
-        <h1 className="text-3xl font-bold mb-6 text-blue-400">Attento Rewards Wallet</h1>
+        <h1 className="text-3xl font-bold mb-6 text-blue-400">Rewards Wallet</h1>
 
         <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 mb-8 flex justify-between items-center">
           <div>

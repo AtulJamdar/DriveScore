@@ -1,4 +1,4 @@
-# DriveScore - Safe Driving Telematics + Rewards (Attento Inspired)
+# DriveScore - Safe Driving Telematics + Rewards 
 
 MERN Stack MVP clone of attento.club - Smartphone based telematics without hardware dongle.
 
