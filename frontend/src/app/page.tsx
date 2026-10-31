@@ -19,7 +19,7 @@ export default function DrivePage() {
   const [miles, setMiles] = useState<number>(0);
   const [isEnded, setIsEnded] = useState<boolean>(false);
   const [events, setEvents] = useState<any[]>([]);
-  const [lastProcessedEventTime, setLastProcessedEventTime] = useState(0);
+  const [lastProcessedEventTime, setLastProcessedEventTime] = useState<number | string>(0);
 
   const { points, currentSpeed, liveScore, lastEvent } = useDriveTracker(tripId, isMock, mockSpeed);
   const { speak } = useVoiceAlert();
@@ -47,10 +47,11 @@ export default function DrivePage() {
   useEffect(() => {
     if (!lastEvent) return;
     
-    // same event ko dobara mat dikhao
-    if (lastEvent.at === lastProcessedEventTime) return;
+    // same event ko dobara mat dikhao (dono me at ya time ho sakta hai)
+    const eventTime = lastEvent.at || (lastEvent as any).time;
+    if (eventTime && eventTime === lastProcessedEventTime) return;
 
-    setLastProcessedEventTime(lastEvent.at);
+    if (eventTime) setLastProcessedEventTime(eventTime);
 
     let msg = ""; let voiceMsg = "";
     if (lastEvent.type === 'harsh_braking') {
@@ -65,7 +66,7 @@ export default function DrivePage() {
     }
 
     if (msg) {
-      setEvents(prev => [{ ...lastEvent, speed: Math.round(currentSpeed), time: new Date().toLocaleTimeString() }, ...prev].slice(0, 10));
+      setEvents(prev => [{ ...lastEvent, speed: Math.round(currentSpeed), time: lastEvent.time || new Date().toLocaleTimeString() }, ...prev].slice(0, 10));
       speak(voiceMsg);
     }
   }, [lastEvent]);

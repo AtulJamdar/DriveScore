@@ -42,6 +42,8 @@ export class TripsService {
     const prevPoint = trip.points[trip.points.length - 1];
     trip.points.push(point);
 
+    let newEvent: { type: 'harsh_braking' | 'harsh_accel' | 'harsh_turn'; at: number } | null = null;
+
     if (prevPoint) {
       const timeDiffSec = (point.timestamp - prevPoint.timestamp) / 1000;
       if (timeDiffSec > 0.5) {
@@ -49,7 +51,7 @@ export class TripsService {
         const v2_ms = (point.speed * 1000) / 3600;
         const accel = (v2_ms - v1_ms) / timeDiffSec;
 
-        let wouldBeType: string | null = null;
+        let wouldBeType: 'harsh_braking' | 'harsh_accel' | 'harsh_turn' | null = null;
         if (accel < -3.5) wouldBeType = 'harsh_braking';
         else if (accel > 3.0) wouldBeType = 'harsh_accel';
         else {
@@ -59,42 +61,47 @@ export class TripsService {
         }
 
         if (wouldBeType) {
-  const lastEv = trip.events[trip.events.length - 1];
-  if (lastEv) {
-    const timeSinceLastEvent = point.timestamp - lastEv.at;
-    // Same type -> 5 sec, different type (turn ke baad accel) -> 2 sec
-    const cooldown = lastEv.type === wouldBeType ? 5000 : 2000;
-    if (timeSinceLastEvent < cooldown) {
-      await trip.save();
-      return { success: true, currentScore: trip.score };
-    }
-  }
+          const lastEv = trip.events[trip.events.length - 1];
+          if (lastEv) {
+            const timeSince = point.timestamp - lastEv.at;
+            const cooldown = lastEv.type === wouldBeType ? 5000 : 6000; // FIX 5: turn->accel 2sec se 6sec kiya
+            if (timeSince < cooldown) {
+              await trip.save();
+              return { success: true, currentScore: trip.score, lastEvent: null }; // FIX 2: null bhejo, purana event mat bhejo
+            }
+          }
 
-  if (wouldBeType === 'harsh_braking') {
-    trip.events.push({ type: 'harsh_braking', at: point.timestamp } as any);
-    trip.score = Math.max(0, trip.score - 10);
-  } else if (wouldBeType === 'harsh_accel') {
-    trip.events.push({ type: 'harsh_accel', at: point.timestamp } as any);
-    trip.score = Math.max(0, trip.score - 8);
-  } else if (wouldBeType === 'harsh_turn') {
-    trip.events.push({ type: 'harsh_turn', at: point.timestamp } as any);
-    trip.score = Math.max(0, trip.score - 12);
-  }
-}
+          if (wouldBeType === 'harsh_braking') {
+            newEvent = { type: 'harsh_braking', at: point.timestamp };
+            trip.score = Math.max(0, trip.score - 10);
+          } else if (wouldBeType === 'harsh_accel') {
+            newEvent = { type: 'harsh_accel', at: point.timestamp };
+            trip.score = Math.max(0, trip.score - 8);
+          } else if (wouldBeType === 'harsh_turn') {
+            newEvent = { type: 'harsh_turn', at: point.timestamp };
+            trip.score = Math.max(0, trip.score - 12);
+          }
+
+          if (newEvent) trip.events.push(newEvent as any);
+        }
       }
     }
 
     await trip.save();
-    return { success: true, currentScore: trip.score, lastEvent: trip.events[trip.events.length - 1] };
+    return { success: true, currentScore: trip.score, lastEvent: newEvent }; // FIX 2: sirf naya event bhejo
   }
 
-  // <-- YAHAN ADD KARNA THA -->
-  async addEvent(tripId: string, eventDto: any) {
+  async addEvent(tripId: string, eventDto: { type: 'harsh_braking' | 'harsh_accel' | 'harsh_turn'; at?: number }) {
     const trip = await this.tripModel.findById(tripId);
     if (!trip) throw new NotFoundException('Trip not found');
-    trip.events.push(eventDto);
+    const at = eventDto.at || Date.now();
+    const event = { type: eventDto.type, at };
+    trip.events.push(event as any);
+    if (eventDto.type === 'harsh_turn') trip.score = Math.max(0, trip.score - 12);
+    else if (eventDto.type === 'harsh_braking') trip.score = Math.max(0, trip.score - 10);
+    else if (eventDto.type === 'harsh_accel') trip.score = Math.max(0, trip.score - 8);
     await trip.save();
-    return trip;
+    return { success: true, currentScore: trip.score, event };
   }
 
   async endTrip(tripId: string) {

@@ -5,7 +5,7 @@ export interface DrivePoint {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://drivescore.onrender.com";
-const GLOBAL_COOLDOWN = 3000; // FIX 1: Bahar nikala - ek jagah se control
+const GLOBAL_COOLDOWN = 3000; // Global cooldown - 3 sec
 
 const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -26,7 +26,6 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
   const mockSpeedRef = useRef(mockSpeed);
   const lastBearingRef = useRef<number>(45);
   
-  // FIX 2: Saare time wale ref banaye - let nahi use karna
   const lastAnyEventRef = useRef<number>(0);
   const lastTurnTimeRef = useRef<number>(0);
   const currentSpeedRef = useRef<number>(0);
@@ -44,24 +43,43 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
     }
   }, [tripId]);
 
-  // Gyro wala
+  // Gyroscope handler
   useEffect(() => {
     if (!tripId) return;
 
     const handleMotion = (e: DeviceMotionEvent) => {
-      const acc = e.acceleration && e.acceleration.x != null ? e.acceleration : e.accelerationIncludingGravity; // FIX: acceleration (gravity nahi)
+      const acc = e.acceleration && e.acceleration.x != null ? e.acceleration : e.accelerationIncludingGravity;
       if (!acc || acc.x === null) return;
       
-      // FIX 3: Global cooldown - 3 sec me ek hi event
+      // Global cooldown - 3 sec me ek hi event
       if (Date.now() - lastAnyEventRef.current < GLOBAL_COOLDOWN) return;
       if (currentSpeedRef.current < 15) return; // 15km/h se kam pe ignore
 
       if (Math.abs(acc.x) > 2.5) {
         lastAnyEventRef.current = Date.now();
         lastTurnTimeRef.current = Date.now();
-        const ev = { type: 'harsh_turn', source: 'gyro', value: acc.x.toFixed(2), time: new Date().toLocaleTimeString(), speed: currentSpeedRef.current };
+        const ev = {
+          type: 'harsh_turn',
+          source: 'gyro',
+          value: acc.x.toFixed(2),
+          time: new Date().toLocaleTimeString(),
+          speed: currentSpeedRef.current,
+          at: Date.now(),
+        };
         setLastEvent(ev);
         setEvents(p => [...p, ev]);
+
+        // Gyro event backend pe bhejo taaki score aur DB sync rahe
+        void fetch(`${API_BASE}/trips/${tripId}/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'harsh_turn', at: ev.at }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data?.currentScore !== undefined) setLiveScore(data.currentScore);
+          })
+          .catch(() => {});
       }
     };
 
@@ -82,15 +100,26 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
         const data = await res.json();
         if (data.currentScore !== undefined) setLiveScore(data.currentScore);
         if (data.lastEvent) {
-           // Backend se event aaya toh bhi global cooldown check
-           if (Date.now() - lastAnyEventRef.current > GLOBAL_COOLDOWN) {
-             lastAnyEventRef.current = Date.now();
-             if (data.lastEvent.type === 'harsh_turn') lastTurnTimeRef.current = Date.now();
-             // FIX 4: Turn ke 2 sec baad accel/brake ignore
-             if (data.lastEvent.type !== 'harsh_turn' && Date.now() - lastTurnTimeRef.current < 2000) return;
-             setLastEvent(data.lastEvent);
-             setEvents(p => [...p, data.lastEvent]);
-           }
+          // Turn ke 6 sec ke andar accel/brake ignore
+          if (data.lastEvent.type !== 'harsh_turn' && Date.now() - lastTurnTimeRef.current < 6000) {
+            return;
+          }
+          // Global cooldown
+          if (Date.now() - lastAnyEventRef.current < GLOBAL_COOLDOWN) {
+            return;
+          }
+
+          lastAnyEventRef.current = Date.now();
+          if (data.lastEvent.type === 'harsh_turn') lastTurnTimeRef.current = Date.now();
+
+          const evWithSpeed = {
+            ...data.lastEvent,
+            speed: currentSpeedRef.current,
+            time: data.lastEvent.time || new Date().toLocaleTimeString(),
+            at: data.lastEvent.at || Date.now(),
+          };
+          setLastEvent(evWithSpeed);
+          setEvents(p => [...p, evWithSpeed]);
         }
       } catch (err) {}
     };
@@ -106,7 +135,14 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
         if (bearingDiff > 35 && mockSpeedRef.current > 20 && Date.now() - lastAnyEventRef.current > 5000) {
           lastAnyEventRef.current = Date.now();
           lastTurnTimeRef.current = Date.now();
-          const ev = { type: 'harsh_turn', source: 'gps', value: bearingDiff.toFixed(0), time: new Date().toLocaleTimeString(), speed: mockSpeedRef.current };
+          const ev = {
+            type: 'harsh_turn',
+            source: 'gps',
+            value: bearingDiff.toFixed(0),
+            time: new Date().toLocaleTimeString(),
+            speed: mockSpeedRef.current,
+            at: Date.now(),
+          };
           setLastEvent(ev);
           setEvents(p => [...p, ev]);
         }
