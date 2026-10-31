@@ -59,25 +59,28 @@ export class TripsService {
         }
 
         if (wouldBeType) {
-          const lastEv = trip.events[trip.events.length - 1];
-          if (lastEv && lastEv.type === wouldBeType) {
-            const timeSinceLastEvent = point.timestamp - lastEv.at;
-            if (timeSinceLastEvent < 5000) {
-              await trip.save();
-              return { success: true, currentScore: trip.score };
-            }
-          }
-          if (wouldBeType === 'harsh_braking') {
-            trip.events.push({ type: 'harsh_braking', at: point.timestamp } as any);
-            trip.score = Math.max(0, trip.score - 10);
-          } else if (wouldBeType === 'harsh_accel') {
-            trip.events.push({ type: 'harsh_accel', at: point.timestamp } as any);
-            trip.score = Math.max(0, trip.score - 8);
-          } else if (wouldBeType === 'harsh_turn') {
-            trip.events.push({ type: 'harsh_turn', at: point.timestamp } as any);
-            trip.score = Math.max(0, trip.score - 12);
-          }
-        }
+  const lastEv = trip.events[trip.events.length - 1];
+  if (lastEv) {
+    const timeSinceLastEvent = point.timestamp - lastEv.at;
+    // Same type -> 5 sec, different type (turn ke baad accel) -> 2 sec
+    const cooldown = lastEv.type === wouldBeType ? 5000 : 2000;
+    if (timeSinceLastEvent < cooldown) {
+      await trip.save();
+      return { success: true, currentScore: trip.score };
+    }
+  }
+
+  if (wouldBeType === 'harsh_braking') {
+    trip.events.push({ type: 'harsh_braking', at: point.timestamp } as any);
+    trip.score = Math.max(0, trip.score - 10);
+  } else if (wouldBeType === 'harsh_accel') {
+    trip.events.push({ type: 'harsh_accel', at: point.timestamp } as any);
+    trip.score = Math.max(0, trip.score - 8);
+  } else if (wouldBeType === 'harsh_turn') {
+    trip.events.push({ type: 'harsh_turn', at: point.timestamp } as any);
+    trip.score = Math.max(0, trip.score - 12);
+  }
+}
       }
     }
 

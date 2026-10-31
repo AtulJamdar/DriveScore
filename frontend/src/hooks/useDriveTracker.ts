@@ -49,14 +49,14 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
     if (!tripId) return;
 
     const handleMotion = (e: DeviceMotionEvent) => {
-      const acc = e.acceleration; // FIX: acceleration (gravity nahi)
+      const acc = e.acceleration && e.acceleration.x != null ? e.acceleration : e.accelerationIncludingGravity; // FIX: acceleration (gravity nahi)
       if (!acc || acc.x === null) return;
       
       // FIX 3: Global cooldown - 3 sec me ek hi event
       if (Date.now() - lastAnyEventRef.current < GLOBAL_COOLDOWN) return;
       if (currentSpeedRef.current < 15) return; // 15km/h se kam pe ignore
 
-      if (Math.abs(acc.x) > 4) {
+      if (Math.abs(acc.x) > 2.5) {
         lastAnyEventRef.current = Date.now();
         lastTurnTimeRef.current = Date.now();
         const ev = { type: 'harsh_turn', source: 'gyro', value: acc.x.toFixed(2), time: new Date().toLocaleTimeString(), speed: currentSpeedRef.current };
