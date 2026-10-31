@@ -14,16 +14,31 @@ export class Trip {
   @Prop({ default: null })
   endTime: Date;
 
-  @Prop({ type: Object, default: {} })
+  @Prop({ default: 'active' })
+  status: string;
+
+  @Prop({ 
+    type: Object, 
+    default: { harshBraking: 0, harshAccel: 0, harshTurn: 0, totalEvents: 0 } 
+  })
   stats: {
-  harshBraking: number;
-  harshAccel: number;
-  harshTurn: number;
-  totalEvents: number;
+    harshBraking: number;
+    harshAccel: number;
+    harshTurn: number;
+    totalEvents: number;
   };
 
-  @Prop()
+  @Prop({ default: 0 })
   totalKm: number;
+
+  @Prop({ default: 0 })
+  milesEarned: number;
+
+  @Prop({ default: 100 })
+  score: number; // live score during trip
+
+  @Prop({ default: 100 })
+  finalScore: number; // final score after endTrip - YE MISSING THA
 
   @Prop({
     type: [
@@ -45,9 +60,6 @@ export class Trip {
     bearing: number;
   }[];
 
-  @Prop({ default: 0 })
-  score: number; // 0 - 100
-
   @Prop({
     type: [
       {
@@ -56,7 +68,7 @@ export class Trip {
           enum: ['harsh_braking', 'harsh_accel', 'harsh_turn'],
           required: true,
         },
-        at: { type: Number, required: true }, // timestamp
+        at: { type: Number, required: true },
       },
     ],
     default: [],
@@ -65,9 +77,6 @@ export class Trip {
     type: 'harsh_braking' | 'harsh_accel' | 'harsh_turn';
     at: number;
   }[];
-
-  @Prop({ default: 0 })
-  milesEarned: number;
 }
 
 export const TripSchema = SchemaFactory.createForClass(Trip);

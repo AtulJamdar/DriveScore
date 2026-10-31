@@ -19,7 +19,7 @@ export default function HistoryPage() {
             <div key={t._id} className="flex justify-between py-4 border-b border-gray-700/50">
               <div>
                 <p>Trip {t._id.slice(-6)} completed - {t.totalKm}km</p>
-                <p className="text-xs text-gray-400">B:{t.stats?.harshBraking||0} A:{t.stats?.harshAccel||0} T:{t.stats?.harshTurn||0} | Score: {t.finalScore || 100}</p>
+                <p className="text-xs text-gray-400">B:{t.stats?.harshBraking||0} A:{t.stats?.harshAccel||0} T:{t.stats?.harshTurn||0} | Score: {t.finalScore ?? t.score ?? 100}</p>   
               </div>
               <span className="text-green-400 font-semibold">+{t.milesEarned || 0} miles</span>
             </div>
