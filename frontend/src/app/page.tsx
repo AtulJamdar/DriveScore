@@ -27,12 +27,20 @@ export default function DrivePage() {
   // Live score update
   useEffect(() => { if (liveScore !== undefined) setScore(liveScore); }, [liveScore]);
 
-  //For PWA
+  // For PWA
   useEffect(() => {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-}, []);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  }, []);
+
+  // Keep Render backend awake
+  useEffect(() => {
+    const ping = () => fetch('https://drivescore.onrender.com/health').catch(() => {});
+    ping();
+    const interval = setInterval(ping, 4 * 60 * 1000); // har 4 min
+    return () => clearInterval(interval);
+  }, []);
 
 
   // Attento style Toast + Voice on every harsh event
