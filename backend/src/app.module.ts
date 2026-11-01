@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TripsModule } from './trips/trips.module';
 import { RewardsModule } from './rewards/rewards.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module'; // <-- ye add kar
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -18,6 +20,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     MongooseModule.forRoot(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/drivescore'),
     TripsModule,
     RewardsModule,
+    UsersModule,
+    AuthModule, // <-- ye bhi add kar
   ],
   controllers: [AppController],
   providers: [AppService],
