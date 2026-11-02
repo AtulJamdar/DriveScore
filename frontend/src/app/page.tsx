@@ -5,6 +5,7 @@ import { useVoiceAlert } from "@/hooks/useVoiceAlert";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
 import Link from "next/link";
+import { getAuthHeaders } from '@/lib/api';
 
 
 
@@ -72,7 +73,7 @@ export default function DrivePage() {
   }, [lastEvent]);
 
   const handleStartTrip = async () => {
-  const res = await fetch(`${API_BASE}/trips/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: "user_123" }) });
+  const res = await fetch(`${API_BASE}/trips/start`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({}) });
   const data = await res.json();
   const newId = data._id || data.id;
   setTripId(newId);
@@ -82,7 +83,10 @@ export default function DrivePage() {
 
   const handleEndTrip = async () => {
   if (!tripId) return;
-  const res = await fetch(`${API_BASE}/trips/${tripId}/end`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/trips/${tripId}/end`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
   const data = await res.json();
   setScore(data.score); setMiles(data.milesEarned); setIsEnded(true); 
   setTripId(null);

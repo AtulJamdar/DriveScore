@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { getAuthHeaders } from '@/lib/api';
+
 
 export interface DrivePoint {
   lat: number; lng: number; speed: number; timestamp: number; bearing: number;
@@ -72,7 +74,7 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
         // Gyro event backend pe bhejo taaki score aur DB sync rahe
         void fetch(`${API_BASE}/trips/${tripId}/event`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ type: 'harsh_turn', at: ev.at }),
         })
           .then(res => res.json())
@@ -94,7 +96,8 @@ export const useDriveTracker = (tripId: string | null, isMock: boolean = false, 
     const sendPoint = async (point: DrivePoint) => {
       try {
         const res = await fetch(`${API_BASE}/trips/${tripId}/point`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: getAuthHeaders(),
           body: JSON.stringify(point),
         });
         const data = await res.json();

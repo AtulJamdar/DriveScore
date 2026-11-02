@@ -1,15 +1,29 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getAuthHeaders } from '@/lib/api';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://drivescore.onrender.com";
 
 export default function HistoryPage() {
   const [trips, setTrips] = useState<any[]>([]);
+
   useEffect(() => {
-    fetch(`${API_BASE}/trips`).then(r=>r.json()).then(data=>{
-      if(Array.isArray(data)) setTrips(data.filter((t:any)=> t.totalKm > 0 || t.stats?.totalEvents > 0).slice(0,20));
-    });
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    const url = userId ? `${API_BASE}/trips/user/${userId}` : `${API_BASE}/trips`;
+
+    fetch(url, {
+      headers: getAuthHeaders(),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTrips(data.filter((t: any) => t.totalKm > 0 || t.stats?.totalEvents > 0).slice(0, 20));
+        }
+      })
+      .catch(err => console.error("Failed to load trip history:", err));
   }, []);
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-white p-4">
       <div className="max-w-2xl mx-auto">
@@ -32,5 +46,4 @@ export default function HistoryPage() {
       </div>
     </div>
   );
-  
 }
